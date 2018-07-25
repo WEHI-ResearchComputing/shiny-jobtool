@@ -1,2 +1,2 @@
 # shiny-jobtool
-A Shiny app for reporting batch job activity
+A Shiny app for reporting batch job activity on Milton.
