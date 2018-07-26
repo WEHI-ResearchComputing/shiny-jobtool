@@ -1,2 +1,1 @@
-# shiny-jobtool
-A Shiny app for reporting batch job activity on Milton.
+Job data are collected very few minutes from the `/sys/fs` and `/proc` filesystems and stored in a Postres database. You are encouraged to access the database directly yourself. If you create something useful please consider sharing it!

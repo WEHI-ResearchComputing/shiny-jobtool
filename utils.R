@@ -42,3 +42,11 @@ createQuery <- function(jobIdString, userString, before, after) {
     
   paste(baseQuery, ' ORDER BY timestamp;', sep = "")
 }
+
+keyPressHandler <- '
+$(document).on("keyup", function(e) {
+if(e.keyCode == 13){
+Shiny.onInputChange("keyPressed", Math.random());
+}
+});
+'
