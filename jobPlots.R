@@ -1,26 +1,19 @@
 
-makePlots <- function(jobData, firstJob = 1, nJobs = 10) {
+processJobData <- function(rawJobData) {
+  jobf      <- unique(rawJobData$jobid)
+  nJobs     <- length(unique(jobf))
   
-  jobf      <- unique(jobData$jobid)
-  nJobs     <- min(nJobs, length(unique(jobf)))
-  jobf      <- jobf[firstJob:(firstJob+nJobs-1)]
-  exJobData <- jobData[jobData$jobid %in% jobf, ]
-  
-  start <- min(exJobData$timestamp)
-  end   <- max(exJobData$timestamp)
-  
-  pcpu   <- vector("list", nJobs)
-  tm     <- vector("list", nJobs)
-  maxCpu <- 0
-  
+  jobData  <- list()
+  jobNames <- list()
+  indx <- 1
   for ( i in 1:nJobs ) {
     job <- jobf[i]
     
     # User time and system time for this job.
-    cpu <- exJobData$utime[exJobData$jobid == job] + exJobData$stime[exJobData$jobid == job]
+    cpu <- rawJobData$utime[rawJobData$jobid == job] + rawJobData$stime[rawJobData$jobid == job]
     
     # Time points for this job
-    tm2 <- exJobData$timestamp[exJobData$jobid == job]
+    tm2 <- rawJobData$timestamp[rawJobData$jobid == job]
     
     # CPU time is cumulative so we need the difference
     dcpu <- diff(cpu)
@@ -28,39 +21,39 @@ makePlots <- function(jobData, firstJob = 1, nJobs = 10) {
     dtm  <- as.numeric(diff(tm2), units = "secs")
     
     # Calculate as a percentage
-    pcpu[[i]] <- dcpu / dtm * 100
+    pcpu <- dcpu / dtm * 100
     
-    # Some event seem to be duplicated leading 0/0 values which now clean out.
-    zIndx <- !is.nan(pcpu[[i]])
-    pcpu[[i]] <- pcpu[[i]][zIndx]
+    # 1. Some event seem to be duplicated leading 0/0 values.
+    # 2. If there is a pid change pcpu may be -ve
+    zIndx <- (!is.nan(pcpu) & pcpu>=0)
+    pcpu <- pcpu[zIndx]
     
-    if ( length(pcpu[[i]]) == 0 ) {
-      tm[[i]] = numeric(0)
-    } else {
+    if ( length(pcpu) != 0 ) {
       # Grab the time values, less the duplicates
-      tm[[i]]   <- tm2[2:length(tm2)][zIndx]
-      
-      # max CPU value to set the Y axis limits
-      maxCpu <- max(maxCpu, max(pcpu[[i]]))
+      tm <- tm2[2:length(tm2)][zIndx]
+
+      jobData[[indx]]  <- data.frame(tm <- tm, pcpu <- pcpu)
+      jobNames[indx] <- strsplit(job, '\\.')[[1]][1]
+      indx <- indx + 1
     }
     
   }
-
-  p <- plot(
-    range(start, end), 
-    range(0, maxCpu), 
-    type = 'n', 
-    xlab = 'Time',
-    ylab = 'CPU %',
-    )
-
-  cols <- rainbow(nJobs)
   
+  list(names = jobNames, data = jobData)
+}
+
+makePlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
+
+  p <- plot_ly(mode = 'line', type = 'scatter')
   for ( i in 1:nJobs ) {
-    lines(tm[[i]], pcpu[[i]], col = cols[i])
+    jindx <- firstJob - 1 + i
+    jd <- jobData$data[[jindx]]
+    y <- jd$pcpu
+    x <- jd$tm
+    n <- jobData$name[[jindx]]
+    p <- add_trace(p, x = x, y = y, name = n, mode = 'line', type = 'scatter')
   }
   
-  legend("bottomleft", jobf, fill = cols)
-  
-  p
+  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = '% CPU'))
 }
+

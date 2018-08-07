@@ -2,9 +2,11 @@ library(shiny)
 library(RPostgreSQL)
 library(shinyjs)
 library(shinycssloaders)
+library(plotly)
 
 source('utils.R')
 source('jobPlots.R')
+source('pagerui.R')
 
 if ( !exists("con") ) {
   con <- dbConnect(dbDriver('PostgreSQL'),
@@ -18,8 +20,8 @@ if ( !exists("con") ) {
 ui <- fluidPage(
  useShinyjs(),
  
- # This ridiculous hack pulls in the loader css class, provided by shinycssloaders,
- # so that I can get programmatic control to show the spinner.
+ # This ridiculous hack pulls in the spinner css class, provided by shinycssloaders,
+ # so that I can get programmatic control over the spinner.
  tags$head(
    tags$link(rel = "stylesheet", type = "text/css", href = "css-loaders/css/load1.css")
  ),  
@@ -51,15 +53,17 @@ ui <- fluidPage(
       
       fluidRow(
         # Create a layout with the action button and a loading spinner.
-        # The spinner is hidden until needed.
         column(3,
                # Execute the query
                actionButton("go", "Go!")
               ),
         column(9,
-               shinyjs::hidden(div(id = "loadingText", class = "load-container load1", div("Loading...", class = "loader", style = "font-size: 5px; margin: 4px; margin-left: 30px")))
+               # The spinner is hidden until needed.
+               shinyjs::hidden(div(id = "loadingSpinner", class = "load-container load1", div("Loading...", class = "loader", style = "font-size: 5px; margin: 3px; margin-left: 30px")))
                )
       ),
+      
+      pageruiInput('jobPager'),
       
       # Output for the SQL for anyone interested
       h4('SQL query (FYI):'),
@@ -68,7 +72,7 @@ ui <- fluidPage(
     
     mainPanel(
       # Output
-      plotOutput(outputId = 'cpuPlot')
+      plotlyOutput('cpuPlot')
     )
   )
 )
@@ -79,34 +83,57 @@ server <- function(input, output, session) {
 
   jobData <- NULL
   query   <- ""
+  before <- NULL
+  after  <- NULL
   plotReady <- reactiveValues(ok = FALSE)
+  firstJob <- 1
+  showJobs <- 10
+  totalJobs <- 0
   
   observeEvent(input$go, {
     if ( isEmpty(query) ) {
       jobData <<- NULL
     } else {
-      plotReady$ok <- FALSE
       shinyjs::disable("go")
-      shinyjs::show("loadingText")
-      jobData <<- dbGetQuery(con, query)
-      plotReady$ok <- TRUE
+      shinyjs::show("loadingSpinner")
+      
+      # Load from the database and preprocess
+      jobData <<- processJobData(dbGetQuery(con, query))
+      totalJobs <<- length(pJobData[[1]])
+      totalPages <- if ( totalJobs %% 10 == 0 ) {
+        totalJobs / 10
+      } else {
+        totalJobs / 10 + 1
+      }
+      
+      # This generates a pager event, so let the pager trigger the update
+      updatePageruiInput(session, 'jobPager', page_current = 1, pages_total = totalPages)
     }
   })
   
-  output$cpuPlot <- renderPlot({
+  observeEvent(input$jobPager, {
+    plotReady$ok <- FALSE
+    page <- input$jobPager$page_current
+    firstJob <<- (page-1)*10 + 1
+    showJobs <<- min(10, totalJobs - firstJob + 1)
+    plotReady$ok <- TRUE
+  })
+  
+  output$cpuPlot <- renderPlotly({
     if ( plotReady$ok ) {
-      shinyjs::enable("go")
-      shinyjs::hide("loadingText")
       validate(need(length(jobData)>0, message = "Query returned no data"))
-      makePlots(jobData)
+      p <- makePlots(jobData, after, before, firstJob = firstJob, nJobs = showJobs)
+      shinyjs::enable("go")
+      shinyjs::hide("loadingSpinner")
+      p
     }
   })
   
   output$query <- renderText({
     users  <- input$userName
     jobs   <- input$jobId
-    after  <- input$dateRange[1]
-    before <- input$dateRange[2]
+    after  <<- input$dateRange[1]
+    before <<- input$dateRange[2]
     
     query <<- createQuery(jobs, users, before, after)
     
