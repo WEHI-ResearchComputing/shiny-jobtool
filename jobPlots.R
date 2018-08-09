@@ -84,7 +84,7 @@ makeCpuPlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
     p <- add_trace(p, x = x, y = y, name = n, mode = 'line', type = 'scatter')
   }
   
-  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = '% CPU'), title = 'CPU use')
+  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = '% of a single CPU'), title = 'CPU use')
 }
 
 makeRssPlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
@@ -99,7 +99,7 @@ makeRssPlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
     p <- add_trace(p, x = x, y = y, name = n, mode = 'line', type = 'scatter')
   }
   
-  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = 'Physical memory (GiB)'), title = 'Real Memory')
+  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = '(GiB)'), title = 'Physical Memory')
 }
 
 makeVirtPlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
@@ -114,6 +114,6 @@ makeVirtPlots <- function(jobData, start, end, firstJob = 1, nJobs = 10) {
     p <- add_trace(p, x = x, y = y, name = n, mode = 'line', type = 'scatter')
   }
   
-  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = 'Virtual memory (GiB)'), title = 'Virtual Memory')
+  layout(p, xaxis = list(title = 'Date'), yaxis = list(title = '(GiB)'), title = 'Virtual Memory')
 }
 
