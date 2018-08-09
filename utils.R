@@ -20,7 +20,7 @@ createQuery <- function(jobIdString, userString, before, after) {
   }
   
   baseQuery <- paste(
-    "SELECT timestamp, jobid, owner, utime, stime FROM jobactivity WHERE ",
+    "SELECT timestamp, jobid, owner, utime, stime, vsize, rss FROM jobactivity WHERE ",
     "timestamp<='", before, "'",
     " AND timestamp>='", after, "'",
     sep = ""
