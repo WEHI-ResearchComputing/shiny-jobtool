@@ -30,6 +30,12 @@ ui <- fluidPage(
  tags$head(
    tags$link(rel = "stylesheet", type = "text/css", href = "css-loaders/css/load1.css")
  ),  
+
+ # This bit brings in some js that allows the containing iframe to resize with the app.
+ tags$head(
+      tags$script(src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/3.5.16/iframeResizer.contentWindow.min.js",
+                  type="text/javascript")
+      ),
  
  # Title
  titlePanel('Simple Job Analysis'),
@@ -102,7 +108,6 @@ ui <- fluidPage(
                  ))
               )
           )
-
 )
 
 server <- function(input, output, session) {
