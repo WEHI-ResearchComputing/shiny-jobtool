@@ -241,3 +241,9 @@ shinyApp(
       })
     }
   )
+
+
+#
+# This is how to embed in an iframe
+# https://www.cultureofinsight.com/blog/2018/03/15/2018-03-15-responsive-iframes-for-shiny-apps/
+#
