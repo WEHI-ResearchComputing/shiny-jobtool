@@ -1,7 +1,7 @@
 
 processJobData <- function(rawJobData) {
-  jobf      <- unique(rawJobData$jobid)
-  nJobs     <- length(unique(jobf))
+  jobf     <- unique(data.frame(rawJobData$jobid, rawJobData$jobname))
+  nJobs    <- length(jobf$rawJobData.jobid)
   
   if ( nJobs == 0 ) {
     return(NULL)
@@ -14,16 +14,17 @@ processJobData <- function(rawJobData) {
   memIndx <- 1
   
   for ( i in 1:nJobs ) {
-    job <- jobf[i]
-    
-    cd <- extractCpuData(rawJobData, job)
+    jobid   <- as.character(jobf$rawJobData.jobid[i])
+    jobname <- as.character(jobf$rawJobData.jobname[i])
+
+    cd <- extractCpuData(rawJobData, jobid)
     if ( !is.null(cd) ) {
       cpuData[[cpuIndx]]  <- cd
-      jobNames[cpuIndx] <- strsplit(job, '\\.')[[1]][1]
+      jobNames[cpuIndx] <- paste(jobname, ' (', strsplit(jobid, '\\.')[[1]][1], ')', sep="")
       cpuIndx <- cpuIndx + 1
     }
     
-    md <- extractMemData(rawJobData, job)
+    md <- extractMemData(rawJobData, jobid)
     if ( !is.null(md) ) {
       memData[[memIndx]] <- md
       memIndx <- memIndx + 1

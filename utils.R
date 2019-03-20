@@ -12,7 +12,7 @@ createQuery <- function(jobIdString, userString, before, after) {
     }
   }
   
-  jobQuery  <- makeQueryString(jobIdString, 'jobid', predicate = ' LIKE ', suffix = '%')
+  jobQuery  <- makeQueryString(jobIdString, 'jobid', predicate = ' = ', suffix = '.torquelord3.hpc.wehi.edu.au')
   userQuery <- makeQueryString(userString, 'owner')
   
   if ( isEmpty(jobQuery) && isEmpty(userQuery) ) {
@@ -20,7 +20,7 @@ createQuery <- function(jobIdString, userString, before, after) {
   }
   
   baseQuery <- paste(
-    "SELECT timestamp, jobid, owner, utime, stime, vsize, rss FROM jobactivity WHERE ",
+    "SELECT timestamp, jobid, jobName, owner, utime, stime, vsize, rss FROM jobactivity WHERE ",
     "timestamp<='", before, "'",
     " AND timestamp>='", after, "'",
     sep = ""
